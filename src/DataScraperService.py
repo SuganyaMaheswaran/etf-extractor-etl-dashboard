@@ -1,41 +1,35 @@
-import requests
-from datetime import datetime
+#Scrape tables, dates, and ETF links from webpages.
+
 from bs4 import BeautifulSoup
+from src import constant as c 
+import requests
 
-#gets table inside of specified div from website 
-def scrape_table(url, divClass):
-    data = requests.get(url).text
-    soup = BeautifulSoup(data, 'html.parser')
-
-    #get div class= holdings-table
-    section = soup.find('section', {'id':'secHoldings'})
-    table = section.find('table')
-    return table
-
-#scrapes date inside of specified div from website 
-def scrape_date(url, divClass):
-    data = requests.get(url).text
-    soup = BeautifulSoup(data, 'html.parser')
-
-    #get div class= holdings-table
-    section = soup.find('section', {'id':'secHoldings'})
+def get_fund_list():
+    """Scrapes the Sprott website and return a list of all etfs """
+    try:
+        response = requests.get(c.SPROTT_ETF_LIST_PAGE, timeout=5)
+        response.raise_for_status()
+        html = response.text
+        print("Success")
+    except requests.exceptions.RequestException as e:
+        print("Request failed:", e)
+        return []
     
-    #gets content in P Tag
-    pTagString = section.find('p')
+    soup = BeautifulSoup(html, 'html.parser')
     
-    #Extracts date from string
-    dateString = pTagString.text.strip().split("As of")[1].split()
-
-    #converts dateString into Date Object 
-    date_format = '%m/%d/%Y'
-    date_time_obj = datetime.strptime(dateString[0], date_format)
-    date_obj = date_time_obj.date()
-    return date_obj
-
-def get_funds():
-    data = requests.get("https://sprottetfs.com/urnm-sprott-uranium-miners-etf").text
-    soup = BeautifulSoup(data, 'html.parser')
-    div = soup.find('div', {'class':'fund-list-nav'})
-    fund_list= [["https://sprottetfs.com"+i['href'], i.text] for i in div.find_all('a', href=True)]
-    return fund_list
- 
+    etfs = []
+    
+    # Return empty list if the fund list div is not found
+    nav_div =  soup.find('div', class_=c.FUND_LIST_DIV_CLASS)
+    if not nav_div:
+        return []
+   
+    #inserts a tuple for each fund wtih url, name, ticker 
+    for a in nav_div.find_all('a', href=True):
+        etf_url = c.SPROTT_BASE_URL + a['href'].strip()
+        etf_name = a['title'].strip()  # Full name from title attribute
+        etf_ticker = a.text.strip()    # Ticker like SETM, URNM
+        etfs.append((etf_url, etf_name, etf_ticker))
+    
+    return etfs
+   
