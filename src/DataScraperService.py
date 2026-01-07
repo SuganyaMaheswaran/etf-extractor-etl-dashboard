@@ -24,7 +24,7 @@ def get_fund_list():
     if not nav_div:
         return []
    
-    #inserts a tuple for each fund wtih url, name, ticker 
+    # Extracts URL, full name, and ticker for each ETF and appends as a tuple to the list
     for a in nav_div.find_all('a', href=True):
         etf_url = c.SPROTT_BASE_URL + a['href'].strip()
         etf_name = a['title'].strip()  # Full name from title attribute
