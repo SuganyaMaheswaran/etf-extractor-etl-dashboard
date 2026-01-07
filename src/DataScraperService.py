@@ -16,9 +16,11 @@ def fetch_html(url, timeout=5):
     
 # Finds the ETF fund div; returns BeautifulSoup object or None. 
 
-def parse_fund_div(html,element, div_class_name): 
+def parse_fund_div(html,element, class_name): 
+    if not html or not element or not class_name:
+        return None
     soup = BeautifulSoup(html, 'html.parser')
-    return soup.find(element, class_=div_class_name)
+    return soup.find(element, class_=class_name)
 
 # Extracts ETF info (url, name, ticker from a nav div)
 def extract_etfs(nav_div, base_url):
