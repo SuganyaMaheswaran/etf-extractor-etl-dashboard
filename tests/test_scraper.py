@@ -48,5 +48,6 @@ class TestGetFundList(unittest.TestCase):
         class_name = ''
         soup_object = ds.parse_fund_div(html, element, class_name )
         self.assertIsNone(soup_object)
+
 if __name__ == "__main__":
     unittest.main()

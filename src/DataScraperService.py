@@ -15,7 +15,6 @@ def fetch_html(url, timeout=5):
          return ""
     
 # Finds the ETF fund div; returns BeautifulSoup object or None. 
-
 def parse_fund_div(html,element, class_name): 
     if not html or not element or not class_name:
         return None
@@ -23,20 +22,20 @@ def parse_fund_div(html,element, class_name):
     return soup.find(element, class_=class_name)
 
 # Extracts ETF info (url, name, ticker from a nav div)
-def extract_etfs(nav_div, base_url):
+def extract_etfs(nav_div, base_url, element, ):
     etfs = []
     if not nav_div:
         return etfs
-    for a in nav_div.find_all('a', href=True):
-        etf_url = urljoin(base_url,a['href'].strip())
+    for a in nav_div.find_all(element, href=True):
+        etf_url = urljoin(base_url,element['href'].strip())
         etf_name = a.get('title', '').strip()
         etf_ticker = a.get_text(strip=True)
         etfs.append((etf_url, etf_name, etf_ticker))
 
-def get_fund_list(url, divClassName,  ):
-    html = fetch_html(c.URL)
+def get_fund_list(url, div_class_name  ):
+    html = fetch_html(url)
     if not html:
         return []
-    nav_div = parse_fund_div(html, c.FUND_LIST_DIV_CLASS)
+    nav_div = parse_fund_div(html, div_class_name)
     base_url = "{0.scheme}://{0.netloc}".format(requests.utils.urlparse(url))
     return extract_etfs(nav_div, base_url)
