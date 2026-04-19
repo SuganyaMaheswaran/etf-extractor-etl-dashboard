@@ -1,150 +1,233 @@
-# ETF Extractor Dashboard
+# ETF Holdings Data Pipeline
 
-**ETF Extractor Dashboard** is a Python-based tool that scrapes ETF fund holdings from public websites, transforms the data, and loads it into a SQL Server database. It supports both live scraping and ETL from CSV datasets, with configurable options for scraping, data types, and database mappings.
+A Python-based data pipeline that scrapes ETF fund holdings from the Sprott website, transforms the data, and loads it into SQL Server.
 
----
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Development Backlog](#development-backlog)
+- [Testing](#testing)
+
+## Project Overview
+
+This project automates the collection and storage of ETF holdings data. It scrapes real-time holdings information from the Sprott ETF website, performs data transformation, and stores the results in a SQL Server database. The pipeline includes intelligent date-checking to avoid duplicate data insertions.
+
+**Tech Stack:**
+- Python 3.x
+- Pandas (data transformation)
+- BeautifulSoup (web scraping)
+- Requests (HTTP client)
+- PyODBC (SQL Server connectivity)
+
+## Architecture
+
+### Data Flow
+
+```
+get_funds() 
+    ↓
+[List of ETF URLs]
+    ↓
+scrapeETF() for each ETF
+    ↓
+scrape_table() + scrape_date()
+    ↓
+Data Transformation (PandaService)
+    ↓
+Date Check (Is this newer than DB?)
+    ↓
+insert_into_table() 
+    ↓
+SQL Server
+```
+
+### Module Breakdown
+
+| Module | Responsibility |
+|--------|-----------------|
+| `main.py` | Entry point - orchestrates the scraping pipeline |
+| `DataScraperService.py` | Web scraping layer - extracts data from HTML |
+| `ScrapeETF.py` | Business logic - orchestrates scraping and date checking |
+| `PandaService.py` | Data transformation - converts HTML to DataFrames, type conversions |
+| `SQLServerService.py` | Database layer - bulk inserts and queries |
+| `ETLScript.py` | Batch processing utility - loads CSV files to SQL Server |
 
 ## Features
 
-- Scrape ETF fund holdings and update dates directly from fund websites.
-- Convert scraped data into structured Pandas DataFrames.
-- Clean and normalize financial data (currency, quantity, percentages, dates).
-- Load ETF holdings data into SQL Server efficiently with bulk inserts.
-- Avoid duplicate inserts by checking the latest holdings date.
-- Fully configurable via `config.json` and `.env` for database connection and ETL options.
+- **Automated Web Scraping**: Extracts ETF holdings tables and dates from Sprott website
+- **Smart Date Checking**: Only inserts new data if update date differs from database
+- **Bulk Insert Optimization**: Uses `fast_executemany` for efficient database writes
+- **Type Conversion**: Automatically converts currency, quantities, percentages, and dates
+- **Error Handling**: Database transactions with rollback on failure
+- **CSV Batch Processing**: Separate ETL script for loading historical CSV data
 
----
+## Setup
 
-## File Structure
+### Prerequisites
+- Python 3.7+
+- SQL Server (Express or higher)
+- Access to SQL Server database named `ETFHoldings`
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd etf-pipeline
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+5. **Set up SQL Server database**
+   - Create database `ETFHoldings`
+   - Create `Holdings` table with schema matching `SQLServerService.py`
+   - Create stored procedure `GetLastUpdateDate`
+
+### Environment Variables
+
+Create a `.env` file:
 ```
-src/
-├── config_loader.py # Loads configuration settings and SQL connection strings
-├── config.json # JSON configuration for scraping, ETL, database, and type mappings
-├── DataScraperService.py # Scrapes ETF fund tables, dates, and available fund links
-├── ETLScript.py # ETL script to read CSVs and insert into SQL Server
-├── main.py # Main script to scrape and update ETF data automatically
-├── PandaService.py # Functions for DataFrame manipulation and type conversion
-├── SQLServerService.py # Functions for interacting with SQL Server database
+DB_DRIVER=SQL Server
+DB_SERVER=.\SQLEXPRESS
+DB_DATABASE=ETFHoldings
+DB_TRUSTED_CONNECTION=yes
+CSV_DATA_PATH=C:\Users\YourUsername\Documents\DataSets\ETF_UDatasets\
+LOG_LEVEL=INFO
 ```
-
----
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/<your-username>/ETFExtractorDashboard.git
-cd ETFExtractorDashboard
-```
-
-Install Python dependencies (recommended in a virtual environment):
-
-```pip install pandas requests beautifulsoup4 pyodbc python-dotenv```
-
-Ensure SQL Server is installed and running. Update your connection settings in .env if necessary.
-
----
-## Configuration
-
-### 1. `config.json`
-
-Controls scraping, ETL, and database behavior:
-
-**etl**
-
-- `csv_dir`: Directory for CSV input files.
-- `nan_to_null`: Convert NaN to SQL `NULL`.
-
-**database**
-
-- `table`: Main database table.
-- `staging_table`: Optional staging table.
-- `use_staging`: Use staging workflow or direct insert.
-
-**mapping**
-
-- `df_to_db`: Maps DataFrame columns to database columns.
-- `required_columns`: Columns required in CSV or scraped data.
-
-**types**
-
-- Data type conversions (`currency`, `quantity`, `percentage`, `date`).
-
-**regex**
-
-- Patterns to clean data.
-
-**scrape**
-
-- `funds_start_url`: Starting URL for scraping ETF fund links.
-- `fund_list_selector`: CSS selector to identify fund links.
-- `holdings_table_selector`: CSS selector to identify holdings table.
-- `date_selector`: CSS selector to extract last update date.
-- `date_prefix`: Prefix in the string before the date (e.g., `"As of"`).
-- `date_format`: Format to parse date strings (`%m/%d/%Y`).
 
 ## Usage
 
-### 1. Scrape and Update ETF Data
-
-Run `main.py` to scrape ETF holdings and insert new data into SQL Server:
+### Run ETF Scraping Pipeline
 
 ```bash
-python src/main.py
+python main.py
 ```
 
 This will:
+1. Fetch list of ETFs from Sprott website
+2. Scrape holdings for each ETF
+3. Check if data is newer than what's in the database
+4. Insert only new records into SQL Server
 
-- Read fund URLs from config.json.
-- Check if the latest holdings date already exists in SQL Server.
-- Convert the holdings table into a DataFrame, clean the data, and insert new records.
-- Skip insertion if no new data is available.
-
-### 2. ETL from CSV Files
-
-Load existing ETF datasets from CSV files into SQL Server:
+### Run Batch CSV Processing
 
 ```bash
-python src/ETLScript.py <directory_path_with_csv_files>
+python ETLScript.py /path/to/csv/directory
 ```
-Example:
+
+### Run Specific ETF Scrape
+
+```python
+from ScrapeETF import scrapeETF
+scrapeETF("https://sprottetfs.com/urnm-sprott-uranium-miners-etf", "URNM")
+```
+
+## Development Backlog
+
+### Infrastructure & Setup
+- [ ] Create `requirements.txt` with all project dependencies
+- [ ] Create `.gitignore` for Python project
+- [ ] Create `.env.example` template file for configuration variables
+
+### Code Quality & Refactoring
+- [ ] Extract hardcoded paths and database connection string to environment variables
+- [ ] Add logging module setup and replace all `print()` statements with proper logging
+- [ ] Refactor exception handling - replace bare `except:` clauses with specific exceptions
+- [ ] Add docstrings to all functions (Google or NumPy style)
+- [ ] Remove unused `divClass` parameter from scraping functions
+
+### Code Cleanup
+- [ ] Delete or repurpose the empty `scrapePhysicalETF.py` file
+
+### Testing
+- [ ] Add unit tests for `PandaService.py` (data type conversion, column addition)
+- [ ] Add unit tests for `DataScraperService.py` (mocking HTTP requests)
+- [ ] Add unit tests for `SQLServerService.py` (mocking database connections)
+- [ ] Add integration test for `ScrapeETF.py` workflow
+- [ ] Create pytest configuration (`pytest.ini` or `pyproject.toml`)
+
+### Documentation & CI/CD
+- [ ] Document SQL Server schema and stored procedures
+- [ ] Add GitHub Actions workflow for CI/CD
+- [ ] Create deployment guide
+
+## Testing
+
+### Run Tests
+
 ```bash
-python src/ETLScript.py "C:\Users\smahe\Documents\DataSets\ETF_UDatasets"
+pytest
 ```
 
-This will:
+### Run Tests with Coverage
 
-- Read all CSV files in the specified directory.
-- Clean and normalize the data.
-- Convert data types (currency, quantity, percentage, date).
-- Insert the cleaned records into the SQL Server database.
+```bash
+pytest --cov=.
+```
 
-## Database Structure
-<table style="width:100%; text-align:left;">
-  <thead>
-    <tr>
-      <th style="width:70%;">Column Name</th>
-      <th style="width:30%;">Data Type</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>security_str</td><td>varchar</td></tr>
-    <tr><td>market_val_int</td><td>float</td></tr>
-    <tr><td>symbol_str</td><td>varchar</td></tr>
-    <tr><td>sedol_str</td><td>varchar</td></tr>
-    <tr><td>quantity_int</td><td>float</td></tr>
-    <tr><td>weight_float</td><td>float</td></tr>
-    <tr><td>etf_str</td><td>varchar</td></tr>
-    <tr><td>update_dt</td><td>date</td></tr>
-  </tbody>
-</table>
+### Run Specific Test File
 
-The `get_date(etf)` function retrieves the most recent update date for a given ETF to prevent duplicate inserts.
+```bash
+pytest tests/test_panda_service.py
+```
 
-## Dependencies
-- Python 3.10+
-- pandas
-- requests
-- beautifulsoup4
-- pyodbc
+### Test Categories
+
+| Module | Tests |
+|--------|-------|
+| `test_panda_service.py` | Data type conversions, DataFrame operations |
+| `test_data_scraper_service.py` | Web scraping (mocked requests) |
+| `test_sql_server_service.py` | Database operations (mocked connections) |
+| `test_scrape_etf.py` | Integration tests for full workflow |
+
+## Known Issues
+
+- Hardcoded file paths in `ETLScript.py`
+- Bare exception handlers need specific error types
+- No logging in place yet (using `print()`)
+- Missing docstrings on functions
+- Unused parameter in scraping functions
+
+## Future Improvements
+
+- Add retry logic for failed scrapes (exponential backoff)
+- Implement data validation before database insertion
+- Add monitoring/alerting for pipeline failures
+- Create dashboard for viewing ETF holdings
+- Add support for other ETF providers
+- Implement incremental scraping (only changed holdings)
+
+## Contributing
+
+Before contributing, please:
+1. Create a feature branch
+2. Add tests for new functionality
+3. Run `pytest` to ensure tests pass
+4. Follow PEP 8 style guidelines
+5. Add docstrings to all functions
+
+## License
+
+[Add your license here]
+
+## Contact
+
+Created by: Suganya Maheswaran
