@@ -9,7 +9,7 @@ import os
 
 #Read CSV File 
 def read_file(filePath):
-    filePath = "C:\\Users\\smahe\\Documents\\DataSets\\ETF_UDatasets\\" + filePath
+    filePath =   os.getenv("CSV_DATA_PATH")
     return  pd.read_csv(filePath)
 
 #remove white space from df
