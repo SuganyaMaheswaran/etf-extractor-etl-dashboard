@@ -7,7 +7,7 @@
 ---
 
 ## Table of Contents
-1. [Infrastructure & Setup (3 tasks)](#infrastructure--setup)
+1. [Infrastructure & Setup (3 tasks)](#infrastructure--setup) 
 2. [Code Quality & Refactoring (5 tasks)](#code-quality--refactoring)
 3. [Code Cleanup (1 task)](#code-cleanup)
 4. [Testing (5 tasks)](#testing)
