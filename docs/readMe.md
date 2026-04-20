@@ -143,12 +143,12 @@ scrapeETF("https://sprottetfs.com/urnm-sprott-uranium-miners-etf", "URNM")
 ## Development Backlog
 
 ### Infrastructure & Setup
-- [ ] Create `requirements.txt` with all project dependencies
-- [ ] Create `.gitignore` for Python project
-- [ ] Create `.env.example` template file for configuration variables
+- [✅] Create `requirements.txt` with all project dependencies
+- [✅] Create `.gitignore` for Python project
+- [✅] Create `.env.example` template file for configuration variables
 
 ### Code Quality & Refactoring
-- [ ] Extract hardcoded paths and database connection string to environment variables
+- [✅] Extract hardcoded paths and database connection string to environment variables
 - [ ] Add logging module setup and replace all `print()` statements with proper logging
 - [ ] Refactor exception handling - replace bare `except:` clauses with specific exceptions
 - [ ] Add docstrings to all functions (Google or NumPy style)
