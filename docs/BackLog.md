@@ -7,7 +7,7 @@
 ---
 
 ## Table of Contents
-1. [Infrastructure & Setup (3 tasks)](#infrastructure--setup) 
+1. [Infrastructure & Setup (3 tasks)](#infrastructure--setup) ✅ DONE
 2. [Code Quality & Refactoring (5 tasks)](#code-quality--refactoring)
 3. [Code Cleanup (1 task)](#code-cleanup)
 4. [Testing (5 tasks)](#testing)
@@ -964,10 +964,10 @@ jobs:
 
 | # | Task | Status | Start Date | End Date | Notes |
 |----|------|--------|-----------|----------|-------|
-| 1 | Create requirements.txt | Pending | - | - | - |
-| 2 | Create .gitignore | Pending | - | - | - |
-| 3 | Create .env template | Pending | - | - | - |
-| 4 | Extract hardcoded values | Pending | - | - | - |
+| 1 | Create requirements.txt | Done | - | - | - |
+| 2 | Create .gitignore | Done | - | - | - |
+| 3 | Create .env template | Done | - | - | - |
+| 4 | Extract hardcoded values | Done | - | - | - |
 | 5 | Add logging | Pending | - | - | - |
 | 6 | Refactor exceptions | Pending | - | - | - |
 | 7 | Add docstrings | Pending | - | - | - |
