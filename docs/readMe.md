@@ -224,9 +224,8 @@ Before contributing, please:
 4. Follow PEP 8 style guidelines
 5. Add docstrings to all functions
 
-## License
+<!-- ## License -->
 
-[Add your license here]
 
 ## Contact
 
