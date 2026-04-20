@@ -1,41 +1,41 @@
-#Scrape tables, dates, and ETF links from webpages.
-
-from bs4 import BeautifulSoup
-from src import constant as c 
-from urllib.parse import urljoin
 import requests
+from datetime import datetime
+from bs4 import BeautifulSoup
 
-# Fetches HTML from a URL, returns text or empty string on failure.
-def fetch_html(url, timeout=5):
-    try:
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()
-        return response.text
-    except requests.exceptions.RequestException as e:
-         return ""
+#gets table inside of specified div from website 
+def scrape_table(url, divClass):
+    data = requests.get(url).text
+    soup = BeautifulSoup(data, 'html.parser')
+
+    #get div class= holdings-table
+    section = soup.find('section', {'id':'secHoldings'})
+    table = section.find('table')
+    return table
+
+#scrapes date inside of specified div from website 
+def scrape_date(url, divClass):
+    data = requests.get(url).text
+    soup = BeautifulSoup(data, 'html.parser')
+
+    #get div class= holdings-table
+    section = soup.find('section', {'id':'secHoldings'})
     
-# Finds the ETF fund div; returns BeautifulSoup object or None. 
-def parse_fund_div(html,element, class_name): 
-    if not html or not element or not class_name:
-        return None
-    soup = BeautifulSoup(html, 'html.parser')
-    return soup.find(element, class_=class_name)
+    #gets content in P Tag
+    pTagString = section.find('p')
+    
+    #Extracts date from string
+    dateString = pTagString.text.strip().split("As of")[1].split()
 
-# Extracts ETF info (url, name, ticker from a nav div)
-def extract_etfs(nav_div, base_url, element, ):
-    etfs = []
-    if not nav_div:
-        return etfs
-    for a in nav_div.find_all(element, href=True):
-        etf_url = urljoin(base_url,element['href'].strip())
-        etf_name = a.get('title', '').strip()
-        etf_ticker = a.get_text(strip=True)
-        etfs.append((etf_url, etf_name, etf_ticker))
+    #converts dateString into Date Object 
+    date_format = '%m/%d/%Y'
+    date_time_obj = datetime.strptime(dateString[0], date_format)
+    date_obj = date_time_obj.date()
+    return date_obj
 
-def get_fund_list(url, div_class_name  ):
-    html = fetch_html(url)
-    if not html:
-        return []
-    nav_div = parse_fund_div(html, div_class_name)
-    base_url = "{0.scheme}://{0.netloc}".format(requests.utils.urlparse(url))
-    return extract_etfs(nav_div, base_url)
+def get_funds():
+    data = requests.get("https://sprottetfs.com/urnm-sprott-uranium-miners-etf").text
+    soup = BeautifulSoup(data, 'html.parser')
+    div = soup.find('div', {'class':'fund-list-nav'})
+    fund_list= [["https://sprottetfs.com"+i['href'], i.text] for i in div.find_all('a', href=True)]
+    return fund_list
+ 
