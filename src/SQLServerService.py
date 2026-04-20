@@ -12,18 +12,17 @@ load_dotenv()
 # Reusable DB connection
 # -----------------------------
 def get_connection():
-    driver = os.getenv("DB_DRIVER")
     server = os.getenv("DB_SERVER")
-    database = os.getenv("DB_NAME")
-    trusted = os.getenv("DB_TRUSTED_CONNECTION")
+    database = os.getenv("DB_DATABASE")
+    if not database:
+        raise ValueError("Database name is not set.")
 
-    conn_str = (
-        f"Driver={driver};"
-        f"Server={server};"
-        f"Database={database};"
-        f"Trusted_Connection={trusted};"
-    )
-
+    conn_str = f"""
+    DRIVER={{ODBC Driver 17 for SQL Server}};
+    SERVER={server};
+    DATABASE={database};
+    TRUSTED_CONNECTION=YES;
+    """
     return pyodbc.connect(conn_str)
 
 
